@@ -1,3 +1,18 @@
 EESchema-DOCLIB  Version 2.0
 #
+$CMP BME280
+D An enviromental sensor capable of measuring temperature, pressure, and relative humidity
+F https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bme280-ds002.pdf
+$ENDCMP
+#
+$CMP BME280_Mod
+D A small BME280 module created by tinytronics, without Level converter, I2C/SPI
+F https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bme280-ds002.pdf
+$ENDCMP
+#
+$CMP BME280_Mod_LC
+D A small BME280 module made by tinytronics, With level converter, I2C
+F https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bme280-ds002.pdf
+$ENDCMP
+#
 #End Doc Library
