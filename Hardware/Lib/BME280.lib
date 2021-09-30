@@ -6,7 +6,7 @@ EESchema-LIBRARY Version 2.4
 DEF BME280 U 0 40 Y Y 1 F N
 F0 "U" 400 100 50 H V C CNN
 F1 "BME280" 500 200 50 H V C CNN
-F2 "" -250 -150 50 H I C CNN
+F2 "BME280:BME280" 650 0 50 H I C CNN
 F3 "" -250 -150 50 H I C CNN
 F4 "Bosch Sensortec" 650 300 50 H V C CNN "Manufacturer"
 DRAW
@@ -25,11 +25,11 @@ ENDDEF
 # BME280_Mod
 #
 DEF BME280_Mod U 0 40 Y Y 1 F N
-F0 "U" 300 0 50 H V C CNN
-F1 "BME280_Mod" 500 100 50 H V C CNN
-F2 "" -200 -200 50 H I C CNN
+F0 "U" 300 -50 50 H V C CNN
+F1 "BME280_Mod" 500 50 50 H V C CNN
+F2 "Connector_PinSocket_2.54mm:PinSocket_1x06_P2.54mm_Vertical" 1500 -150 50 H I C CNN
 F3 "" -200 -200 50 H I C CNN
-F4 "Tinytronics" 450 200 50 H V C CNN "Manufacturer"
+F4 "Tinytronics" 450 150 50 H V C CNN "Manufacturer"
 DRAW
 S -200 250 200 -250 0 1 0 f
 X Vcc 1 100 350 100 D 50 50 1 1 W
@@ -46,7 +46,7 @@ ENDDEF
 DEF BME280_Mod_LC U 0 40 Y Y 1 F N
 F0 "U" 400 0 50 H V C CNN
 F1 "BME280_Mod_LC" 650 100 50 H V C CNN
-F2 "" -250 50 50 H I C CNN
+F2 "Connector_PinSocket_2.54mm:PinSocket_1x04_P2.54mm_Vertical" 1550 -100 50 H I C CNN
 F3 "" -250 50 50 H I C CNN
 F4 "Tinytronics" 550 200 50 H V C CNN "Manufacturer"
 DRAW
