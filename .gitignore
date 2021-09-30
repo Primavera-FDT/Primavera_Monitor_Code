@@ -4,4 +4,25 @@
 *.doc
 *.~
 *.tex
+*.000
+*.bak
+*.bck
+*.kicad_pcb-bak
+*.sch-bak
+*~
+
+_autosave-*
+*.tmp
+*-save.pro
+*-save.kicad_pcb
+fp-info-cache
+
+*.net
+*.dsn
+*.ses
+
+*.csv
+*.tsv
+*.xml
+*.bak
 
