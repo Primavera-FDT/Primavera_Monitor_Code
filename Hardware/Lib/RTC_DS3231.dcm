@@ -2,7 +2,7 @@ EESchema-DOCLIB  Version 2.0
 #
 $CMP RTC_DS3231_Mod
 D RTC Module with external battery
-K rtc clk 
+K rtc clk
 $ENDCMP
 #
 #End Doc Library
