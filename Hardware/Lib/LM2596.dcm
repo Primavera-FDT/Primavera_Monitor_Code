@@ -1,0 +1,8 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP LM2596_DC_DC_Conveter
+D DC/DC converter module 4~40V - 1.25~12V
+K voltage converter module dc/dc
+$ENDCMP
+#
+#End Doc Library
