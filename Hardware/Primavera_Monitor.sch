@@ -14,17 +14,6 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L Primavera_Monitor-rescue:BackBoard-MSP-EXP432P401R U?
-U 1 1 615EADFD
-P 5450 3750
-F 0 "U?" H 4900 5000 50  0000 C CNN
-F 1 "BackBoard" H 5050 5100 50  0000 C CNN
-F 2 "" H 4850 2800 50  0001 C CNN
-F 3 "" H 4850 2800 50  0001 C CNN
-	1    5450 3750
-	1    0    0    -1  
-$EndComp
-$Comp
 L Primavera_Monitor-rescue:RTC_DS3231_Mod-RTC_DS3231 U?
 U 1 1 615EE710
 P 5600 6750
@@ -753,4 +742,15 @@ F 3 "" H 9850 4700 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	9850 4700 9850 4850
+$Comp
+L MSP-EXP432P401R:BackBoard U?
+U 1 1 618500BC
+P 5450 3750
+F 0 "U?" H 5450 5281 50  0000 C CNN
+F 1 "BackBoard" H 5450 5190 50  0000 C CNN
+F 2 "MSP-EXP432P401R:MSP-EXP432P401R-Backboard" H 6750 2500 50  0001 C CNN
+F 3 "" H 4850 2800 50  0001 C CNN
+	1    5450 3750
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
