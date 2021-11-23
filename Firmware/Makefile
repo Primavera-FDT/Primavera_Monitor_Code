@@ -14,12 +14,12 @@ GCC_MSP_INC_DIR := include/msp_headers
 GCC_CMSIS_INC_DIR := $(GCC_MSP_INC_DIR)/CMSIS
 LD_SCRIPT := $(GCC_MSP_INC_DIR)/$(shell echo $(DEVICE) | tr A-Z a-z)
 
-GCC_INC_DIR := /usr/lib/gcc/arm-none-eabi/11.2.0/include
-CC := arm-none-eabi-gcc-11.2.0
+GCC_INC_DIR := /usr/lib/gcc/arm-none-eabi/include
+CC := arm-none-eabi-gcc
 GDB := arm-none-eabi-gdb
 OBJCOPY := arm-none-eabi-objcopy
 
-FLASHER := /opt/ti/uniflash/dslite.sh
+FLASHER := dslite.sh
 CONFIG_FILE := MSP432P401R.ccxml
 
 # System config options
