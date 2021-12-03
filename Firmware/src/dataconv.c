@@ -15,10 +15,10 @@
 
 
 //********************************************************************
-int strlen(const char *buf){
+unsigned int strlen(const char *buf){
 //********************************************************************
     
-    int len;
+    unsigned int len;
     for (len = 0; buf[len] != 0; len++);
     return len;
 }
@@ -27,7 +27,7 @@ int strlen(const char *buf){
 void Reverse_String(char *buf){
 //********************************************************************
 
-    int len = strlen(buf);
+    unsigned int len = strlen(buf);
     for (int i = 0; i < strlen(buf)/2 ; i++) 
     {
         char c = buf[i];
@@ -37,7 +37,7 @@ void Reverse_String(char *buf){
 }
 
 //********************************************************************
-int FloatToString(char *buf, float fVal){
+int FloatToString(char *buf, char *loc, float fVal){
 //********************************************************************
 
     if ((fVal < -3.4e38) || (fVal > 3.4e38 - 1)) 
@@ -65,13 +65,14 @@ int FloatToString(char *buf, float fVal){
     }
     
     *buf = '\0';
+    loc = buf;
     Reverse_String(buf);
 
     return DAT_OK;
 }
 
 //********************************************************************
-int IntToString(char *buf, int iVal){
+int IntToString(char *buf, char *loc, int iVal){
 //********************************************************************
 
     if ((iVal < -32768) || (iVal > 32767)) 
@@ -103,13 +104,14 @@ int IntToString(char *buf, int iVal){
     }
 
     *buf= '\0'; //We finish the string setting the \0
+    loc = buf;
     Reverse_String(buf);
 
     return DAT_OK;
 }
 
 //********************************************************************
-int UintToString(char *buf, unsigned int uVal){
+int UintToString(char *buf, char *loc, unsigned int uVal){
 //********************************************************************
 
     // and fill the buffer with the values in ASCII of the numbers
@@ -121,6 +123,7 @@ int UintToString(char *buf, unsigned int uVal){
     while(uVal > 0);
 
     *buf= '\0'; //We finish the string setting the \0
+    loc = buf;
     Reverse_String(buf);
 
     return DAT_OK;

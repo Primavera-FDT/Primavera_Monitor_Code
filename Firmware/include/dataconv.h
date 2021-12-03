@@ -26,6 +26,12 @@
 *                  PROTOTYPES OF EXPORTED FUNCTIONS                  *
 **********************************************************************/
 
+static inline unsafe_concat(const char *buf, const char *str) {
+    while(*str != '\0' && *buf != '\0') {
+        *buf++ = *str++;
+    }
+}
+
 /************************************************
 *  Calculate the length of a given char array  *
 ************************************************/
@@ -39,19 +45,19 @@ void Reverse_string(char *buf);
 /************************************************
 *  Convert the float given number to a string  *
 ************************************************/
-int FloatToString(char *buf, float fVal);
+int FloatToString(char *buf, char *loc, float fVal);
 
 /********************************************
 *  Convert the integer given to a string   *
 ********************************************/
 
-int IntToString(char *buf, int iVal);
+int IntToString(char *buf, char *loc, int iVal);
 
 /*****************************************************
 *  Convert the unsigned integer given to a string   *
 *****************************************************/
 
-int UintToString(char *buf, unsigned int uVal);
+int UintToString(char *buf, char *loc, unsigned int uVal);
 
 
 #endif // ___DAT_HEADER__
