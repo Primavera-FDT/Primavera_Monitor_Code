@@ -15,6 +15,15 @@
 
 
 //********************************************************************
+static inline unsafe_concat(const char *buf, const char *str){
+//********************************************************************
+  while(*str != '\0' && *buf != '\0'){
+      *buf++ = *str++;
+  } 
+}
+
+
+//********************************************************************
 unsigned int strlen(const char *buf){
 //********************************************************************
     
@@ -46,21 +55,30 @@ int FloatToString(char *buf, char *loc, float fVal){
         return DAT_ERROR;
     }
  
-    if (fVal < 0) 
+    int val = (int) (fVal * 1000);    
+    if (val < 0) 
     {
-        fVal = fVal*(-1);
-        for (int i= 0; iVal > 0; i++) 
+        int count = 0;
+        val = val*(-1);
+        for (int i= 0; val > 0; i++) 
         {
-            *buf++ = '0' + (fVal % 10);
-            fVal /= 10;
+            *buf++ = '0' + (val % 10);
+            val /= 10;
+            count ++;
+            if(count == 3)
+                *buf++ = '.';
         }
         *buf++ = '-';
     } else {
-    
-        for (int i= 0; fVal > 0; i++)
+        
+        int count = 0;
+        for (int i= 0; val > 0; i++)
         {
-            *buf++ = '0' + (fVal % 10);
-            fVal /= 10;
+            *buf++ = '0' + (val % 10);
+            val /= 10;
+            count ++;
+            if(count == 3)
+                *buf++ = '.';
         }
     }
     
@@ -128,4 +146,60 @@ int UintToString(char *buf, char *loc, unsigned int uVal){
 
     return DAT_OK;
 }
+
+// ****************************************************************************
+int AppendCRC(char *buf) {
+// ****************************************************************************
+  int len, i;
+  unsigned int checksum;
+
+  len = strlen(sendBuf);
+
+  checksum = 0xffff;
+  for (i = 0; i < len; i++) {
+    checksum = CRC(checksum, (unsigned char) buf[i]);
+  }
+
+  buf[len + 1] = IntToHex(checksum, 3);
+  buf[len + 2] = IntToHex(checksum, 2);
+  buf[len + 3] = IntToHex(checksum, 1);
+  buf[len + 4] = IntToHex(checksum, 0);
+
+  return DAT_OK;
+}
+
+#ifdef CRC_CCITT
+#define CRCPOLY 0x8408                      // do crc ccitt
+#else
+#define CRCPOLY 0xa001                      // do crc-16
+#endif // CRC_CCITT
+
+// ****************************************************************************
+unsigned int CRC(unsigned int crcoldnew, unsigned char cval) {
+// ****************************************************************************
+  int i, j;
+
+  for (i = 0; i != 8; cval >>= 1, i++) {
+    j = (cval ^ crcoldnew) & 1;
+    crcoldnew >>= 1;
+
+    if (j)
+      crcoldnew ^= CRCPOLY;
+  }
+
+  return (crcoldnew);
+}
+
+// ****************************************************************************
+char IntToHex(unsigned int inval, char digit) {
+// ****************************************************************************
+  char hexVal;
+
+  hexVal = (char) ((inval >> ((digit & 0x03) << 2)) & 0x000f) + '0';
+  if (hexVal > '9')
+    hexVal += 7;
+
+  return hexVal;
+}
+
 

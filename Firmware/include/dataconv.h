@@ -26,11 +26,10 @@
 *                  PROTOTYPES OF EXPORTED FUNCTIONS                  *
 **********************************************************************/
 
-static inline unsafe_concat(const char *buf, const char *str) {
-    while(*str != '\0' && *buf != '\0') {
-        *buf++ = *str++;
-    }
-}
+/************************
+*  Concat two strings  *
+************************/
+static inline unsafe_concat(const char *buf, const char *str);
 
 /************************************************
 *  Calculate the length of a given char array  *
@@ -50,14 +49,27 @@ int FloatToString(char *buf, char *loc, float fVal);
 /********************************************
 *  Convert the integer given to a string   *
 ********************************************/
-
 int IntToString(char *buf, char *loc, int iVal);
 
 /*****************************************************
 *  Convert the unsigned integer given to a string   *
 *****************************************************/
-
 int UintToString(char *buf, char *loc, unsigned int uVal);
+
+/**********************************************
+*  Appends hex-ascii CRC16 checksum buffer  *
+**********************************************/
+int AppendCRC(char *buf);
+
+/************************************************
+*  Calculate the new CRC16 or CRCCCCITT value  *
+************************************************/
+unsigned int CRC(unsigned int crcoldnew, unsigned char cval);
+
+/****************************************************************
+*  Convert the specified nibble of given integer to HEX value  *
+****************************************************************/
+char _IntToHex(unsigned int inval, char digit);
 
 
 #endif // ___DAT_HEADER__
