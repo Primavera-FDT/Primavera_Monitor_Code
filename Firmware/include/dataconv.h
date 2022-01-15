@@ -51,8 +51,8 @@ int FloatToString(char *buf, char *loc, float fVal);
 ********************************************/
 int IntToString(char *buf, char *loc, int iVal);
 
-/*****************************************************
-*  Convert the unsigned integer given to a string   *
+/****************************************************
+*  Convert the unsigned int given into a string  *
 *****************************************************/
 int UintToString(char *buf, char *loc, unsigned int uVal);
 

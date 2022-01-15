@@ -24,7 +24,7 @@ void vStream(void *pvParameters) {
     while(1){
         
         xSemaphoreTake(Mutex[MUTEX_MAIN], portMAX_DELAY);
-        xQueueReceive(Queue[QUEUE_RECV_FROM_MAIN], &command, 0);
+        xQueueReceive(Queue[QUEUE_RECV_FROM_MAIN],(void *)&command, 0);
         if(command == SEND || command == STREAM_START){
             CreateData(data);
             xQueueSend(Queue[QUEUE_SEND_TO_UART], (void *)&data, portMAX_DELAY);
