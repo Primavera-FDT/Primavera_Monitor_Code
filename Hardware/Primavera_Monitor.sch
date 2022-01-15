@@ -1218,4 +1218,48 @@ Text GLabel 4300 4500 0    50   Input ~ 0
 CCR
 Wire Wire Line
 	4300 4500 4550 4500
+$Comp
+L Mechanical:MountingHole H1
+U 1 1 61BABFEB
+P 7250 5350
+F 0 "H1" H 7350 5396 50  0000 L CNN
+F 1 "MountingHole" H 7350 5305 50  0000 L CNN
+F 2 "MountingHole:MountingHole_4mm" H 7250 5350 50  0001 C CNN
+F 3 "~" H 7250 5350 50  0001 C CNN
+	1    7250 5350
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole H2
+U 1 1 61BAC28C
+P 7250 5550
+F 0 "H2" H 7350 5596 50  0000 L CNN
+F 1 "MountingHole" H 7350 5505 50  0000 L CNN
+F 2 "MountingHole:MountingHole_4mm" H 7250 5550 50  0001 C CNN
+F 3 "~" H 7250 5550 50  0001 C CNN
+	1    7250 5550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole H3
+U 1 1 61BAC4F7
+P 7250 5750
+F 0 "H3" H 7350 5796 50  0000 L CNN
+F 1 "MountingHole" H 7350 5705 50  0000 L CNN
+F 2 "MountingHole:MountingHole_4mm" H 7250 5750 50  0001 C CNN
+F 3 "~" H 7250 5750 50  0001 C CNN
+	1    7250 5750
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole H4
+U 1 1 61BAC730
+P 7250 5950
+F 0 "H4" H 7350 5996 50  0000 L CNN
+F 1 "MountingHole" H 7350 5905 50  0000 L CNN
+F 2 "MountingHole:MountingHole_4mm" H 7250 5950 50  0001 C CNN
+F 3 "~" H 7250 5950 50  0001 C CNN
+	1    7250 5950
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
