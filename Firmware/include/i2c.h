@@ -78,7 +78,9 @@ int I2C_Send( struct I2C_Client client, unsigned char *msg, uint8_t msg_len );
  *      enough data that is send. The device will at most send 20 bytes at
  *      a time.
  *      - msg_len (uint8_t *) : This is a pointer to an uint8_t where the
- *      function will write the length of the message to.
+ *      function will write the length of the message to. If the integer
+ *      msg_len is pointing to does not equal 0, The I2C_peripheral will read
+ *      upto msg_len of bytes
  *
  *  Returns:
  *      - 0 on success
@@ -110,12 +112,20 @@ void I2C_Bus_2_Peripheral(void *pvparameters);
 
 uint8_t ids[10] = {0,0,0,0,0,0,0,0,0,0};
 
-struct i2c_queue_message {
-    unsigned char message[20];
-    uint8_t msg_len;
+int I2C_Get_ID(void);
+void I2C_Free_ID(int id);
+
+struct I2C_Msg_To_Handler {
     struct I2C_Client client;
-    enum I2C_Session_Type type;
-    uint8_t id;
+    int id;
+    unsigned char msg[20];
+    uint8_t msg_len;
+};
+
+struct I2C_Msg_From_Handler {
+    int id;
+    unsigned char msg[20];
+    uint8_t msg_len;
 };
 
 #endif
