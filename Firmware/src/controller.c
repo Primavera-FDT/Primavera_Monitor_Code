@@ -1,75 +1,203 @@
 #include "controller.h"
 
+#define SECOND_1_DELAY 24000000
+#define MILISECOND_20_DELAY 480000
+
+void T32_INT1_IRQHandler(void) {
+
+    BaseType_t xHigherPriorityTaskWoken_1 = pdFALSE;
+    BaseType_t xHigherPriorityTaskWoken_2 = pdFALSE;
+
+    xSemaphoreGiveFromISR( shock_1_mutex, &xHigherPriorityTaskWoken_1 );
+    xSemaphoreGiveFromISR( shock_2_mutex, &xHigherPriorityTaskWoken_2 );
+
+    TIMER32_1->INTCLR = 1;
+
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken_1 || xHigherPriorityTaskWoken_2 );
+
+}
+
+void T32_INT2_IRQHandler(void) {
+
+    BaseType_t bme280_woken = pdFALSE;
+    BaseType_t streamer_woken = pdFALSE;
+    BaseType_t rtc_woken = pdFALSE;
+    BaseType_t mpu_woken = pdFALSE;
+    BaseType_t rot_speed_woken = pdFALSE;
+
+    xSemaphoreGiveFromISR( bme280_sema, &bme280_woken );
+    xSemaphoreGiveFromISR( streamer_sema, &streamer_woken );
+    xSemaphoreGiveFromISR( rtc_sema, &rtc_woken );
+    xSemaphoreGiveFromISR( mpu_sema, &mpu_woken );
+    xSemaphoreGiveFromISR( rot_speed_sema, &rot_speed_woken );
+
+    TIMER32_2->INTCLR = 1;
+
+    BaseType_t result = bme280_woken || streamer_woken || rtc_woken || mpu_woken ||
+        rot_speed_woken;
+
+    portYIELD_FROM_ISR( result );
+}
+
+void Timers_init(void) {
+    TIMER32_2->CONTROL |= ( 1 << 6 );
+    TIMER32_2->CONTROL |= ( 1 << 1 );
+    TIMER32_2->CONTROL |= ( 1 << 7 );
+    TIMER32_2->CONTROL &= ~1;
+    TIMER32_2->CONTROL &= ~( 3 << 2 );
+
+    TIMER32_2->LOAD = SECOND_1_DELAY;
+
+    //TIMER32_1->CONTROL |= ( 1 << 6 );
+    //TIMER32_1->CONTROL |= ( 1 << 1 );
+    //TIMER32_1->CONTROL |= ( 1 << 7 );
+
+    //TIMER32_1->LOAD = MILISECOND_20_DELAY;
+
+    //NVIC_EnableIRQ(T32_INT1_IRQn);
+    //NVIC_SetPriority(T32_INT1_IRQn, 6);
+    NVIC_EnableIRQ(T32_INT2_IRQn);
+    NVIC_SetPriority(T32_INT2_IRQn, 6);
+
+    //TIMER32_1->CONTROL |= ( 1 << 5);
+    TIMER32_2->CONTROL |= ( 1 << 5);
+}
+
+char *send = "send\n";
+char *error = "error\n";
+
 void vController(void *pvParameters) {
+
+    P1->DIR |= 1;
+    P1->OUT &= ~1;
 
     while(1) {
 
-        // Create Binaries
-        unsigned int BinaryLen = sizeof(Binary) / sizeof(Binary[0]);
-        for( unsigned int i=0; i<BinaryLen; i++) {
-            Binary[i].handle = xSemaphoreCreateBinary();
-        }
-        
-        // Create Counting Binaries
-        unsigned int CountingLen = sizeof(Counting) / sizeof(Counting[0]);
-        for( unsigned int i=0; i<CountingLen; i++) {
-            struct CountingConfig m = Counting[i];
-            Counting[i].handle = xSemaphoreCreateCounting(m.MaxCount, m.InitialCount);
-        }
+        user_commands = xQueueCreate( 5, sizeof(struct User_Command_Message));
+        uart_queue = xQueueCreate( 4, sizeof(char *));
+        pressure_queue = xQueueCreate( 1, sizeof(uint16_t));
+        temperature_queue = xQueueCreate( 1, sizeof(uint16_t));
+        humidity_queue = xQueueCreate( 1, sizeof(uint16_t));
+        shock_1_queue = xQueueCreate( 1 , sizeof(struct MPU6050_Data));
+        shock_2_queue = xQueueCreate( 1, sizeof(struct MPU6050_Data));
+        rotational_speed_queue = xQueueCreate( 1, sizeof(uint16_t));
+        date_queue = xQueueCreate( 1, sizeof(struct Date));
 
-        // Create Mutexes
-        unsigned int MutexLen = sizeof(Mutex) / sizeof(Mutex[0]);
-        for( unsigned int i=0; i<MutexLen; i++) {
-            Mutex[i].handle = xSemaphoreCreateMutex();
-        }
-        
-        // Create Queues
-        unsigned int QueueLen = sizeof(Queue) / sizeof(Queue[0]);
-        for( unsigned int i=0; i<QueueLen; i++) {
-            struct QueueConfig m = Queue[i];
-            Queue[i].handle = xQueueCreate( m.length, m.size );
-        }
+        uart_peripheral = xSemaphoreCreateMutex();
+        uart_receive = xSemaphoreCreateBinary();
+
+        bme280_sema = xSemaphoreCreateBinary();
+        mpu_sema = xSemaphoreCreateBinary();
+
+        shock_1_mutex = xSemaphoreCreateBinary();
+        shock_2_mutex = xSemaphoreCreateBinary();
+
+        rtc_sema = xSemaphoreCreateBinary();
+
+        streamer_sema = xSemaphoreCreateBinary();
+
+        rot_speed_sema = xSemaphoreCreateBinary();
+
 
         // Start functions
+        xTaskCreate( vUARTReceive,
+                     "vUARTReceive",
+                     configMINIMAL_STACK_SIZE,
+                     NULL,
+                     2,
+                     NULL);
+
+        xTaskCreate( vUARTSend,
+                     "vUARTSend",
+                     configMINIMAL_STACK_SIZE,
+                     NULL,
+                     4,
+                     NULL);
+
+        xTaskCreate( vStreamer,
+                     "vStreamer",
+                     configMINIMAL_STACK_SIZE,
+                     NULL,
+                     4,
+                     NULL );
+
+        xTaskCreate( vBME280,
+                     "vBME280",
+                     configMINIMAL_STACK_SIZE,
+                     NULL,
+                     4,
+                     NULL );
+
+
+        xTaskCreate( vMPU6050,
+                     "vMPU6050",
+                     configMINIMAL_STACK_SIZE,
+                     NULL,
+                     4,
+                     NULL );
+
+        xTaskCreate( vRotSpeed,
+                     "vRotSpeed",
+                     configMINIMAL_STACK_SIZE,
+                     NULL,
+                     4,
+                     NULL );
+
+        xTaskCreate( vRTC,
+                     "vRTC",
+                     configMINIMAL_STACK_SIZE,
+                     NULL,
+                     4,
+                     NULL );
+
+        Timers_init();
+
+        xQueueSend( uart_queue, &send, portMAX_DELAY );
 
         while(1) {
-
-            // Wait for commands from UART
-            switch() {
+            struct User_Command_Message msg;
+            xQueueReceive( user_commands, (void *) &msg, portMAX_DELAY );
+            switch(msg.Command) {
                 case SEND:
-                    // SEND command to streamer
+                    xQueueSend( uart_queue, &send, portMAX_DELAY );
                     break;
-                default:
+                case STREAM_START:
+                    break;
+                case STREAM_STOP:
+                    break;
+                case LOG:
+                    break;
+                case STATUS:
+                    break;
+                case MOUNT_SD:
+                    break;
+                case EJECT_SD:
+                    break;
+                case TIME_SET:
                     break;
             }
-
         }
-
-        // Stop functions
-        
-        // Destroy Queues
-        for( unsigned int i=0; i<QueueLen; i++) {
-            vQueueDelete( Queue[i].handle );
-        }
-        
-        // Destroy Mutexes
-        for( unsigned int i=0; i<MutexLen; i++) {
-            vSemaphoreDelete( Mutex[i].handle );
-        }
-
-        // Destroy Counting Binaries
-        for( unsigned int i=0; i<CountingLen; i++) {
-            vSemaphoreDelete( Counting[i].handle );
-        }
-
-        // Destroy Binaries
-        for( unsigned int i=0; i<BinaryLen; i++) {
-            vSemaphoreDelete( Binary[i].handle );
-        }
-
-        // Reset handling
+       
+        vSemaphoreDelete( uart_peripheral );
+        vSemaphoreDelete( uart_receive );
+        vQueueDelete( user_commands );
+        vQueueDelete( uart_queue );
 
     }
 
     vTaskDelete( NULL ); // Just for security
+}
+
+int main(void) {
+    WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;
+    xTaskCreate(
+            vController,
+            "Controller",
+            configMINIMAL_STACK_SIZE,
+            NULL,
+            3,
+            NULL);
+
+    __enable_interrupt();
+    vTaskStartScheduler();
 }

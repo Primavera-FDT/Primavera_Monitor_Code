@@ -4,35 +4,13 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-struct Counting_Semaphore {
-    SemaphoreHandle_t Handle;
-    UBaseType_t Max_Count;
-    UBaseType_t Initial_Count;
-};
+#include "uart.h"
+#include "streamer.h"
+#include "rtc.h"
+#include "rot_speed.h"
+#include "mpu6050.h"
+#include "bme280.h"
 
-struct Queue_Config {
-    QueueHandle_t Queue;
-    unsigned int Elements;
-    unsigned int Size;
-};
-
-SemaphoreHandle_t Binary[] = {
-
-};
-
-struct Counting_Semaphore Counting[] = {
-
-}:
-
-SemaphoreHandle_t Mutex[] = {
-
-};
-
-struct Queue_Config Queue[] = {
-
-};
-
-// The main controller task
 void vController(void *pvParameters);
 
 #endif

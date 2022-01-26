@@ -9,4 +9,4 @@ $(FR_H_PATH_OUT)/%.o : $(FR_H_PATH)/%.c
 	@echo ===========================================
 	@echo Generating file $@
 	@mkdir -p $(FR_H_PATH_OUT)
-	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $@
+	$(CC) -c $(CFLAGS) $(INCLUDES) $^ -o $@

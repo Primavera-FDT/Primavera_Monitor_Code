@@ -19,7 +19,7 @@ CC := arm-none-eabi-gcc
 GDB := arm-none-eabi-gdb
 OBJCOPY := arm-none-eabi-objcopy
 
-FLASHER := dslite.sh
+FLASHER := /opt/ti/uniflash/dslite.sh
 CONFIG_FILE := MSP432P401R.ccxml
 
 # System config options
@@ -35,7 +35,7 @@ DEVICE_FLAGS := -mcpu=cortex-m4 -march=armv7e-m -mfloat-abi=hard \
 
 GCC_FLAGS := -Dgcc -g -gstrict-dwarf -Wall
 
-CFLAGS := -c $(DEVICE_FLAGS) $(GCC_FLAGS) -ffunction-sections \
+CFLAGS := $(DEVICE_FLAGS) $(GCC_FLAGS) -ffunction-sections \
 		  -fdata-sections -MD -std=c99
 
 LDFLAGS := $(DEVICE_FLAGS) $(GCC_FLAGS) -T$(LD_SCRIPT).lds -l'c' -l'gcc' \
@@ -58,10 +58,22 @@ include $(FREERTOS_DIR)/subdir_rules.mk
 
 all : $(OBJ_DIR)/$(PROGRAM).hex
 
+test: $(OBJ_DIR)/Test.hex
+
+$(OBJ_DIR)/Test.hex: $(OBJ_DIR)/Test.out
+	@echo =========================================
+	@echo Creating Flash image
+	$(OBJCOPY) $^ $@
+
 $(OBJ_DIR)/$(PROGRAM).hex : $(OBJ_DIR)/$(PROGRAM).out
 	@echo =========================================
 	@echo Creating Flash image
 	$(OBJCOPY) $^ $@
+
+$(OBJ_DIR)/Test.out : test/main.c test/startup_msp432p401r_gcc.c test/system_msp432p401r.c
+	@echo =========================================
+	@echo Creating testing program
+	$(CC) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $^ -o $@
 
 $(OBJ_DIR)/$(PROGRAM).out : $(OBJECTS)
 	@echo =========================================
@@ -72,10 +84,13 @@ $(OBJ_DIR)/%.o : src/%.c
 	@echo =========================================
 	@echo Generating file $@
 	@mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $@
+	$(CC) -c $(CFLAGS) $(INCLUDES) $^ -o $@
 
 clean:
 	rm -rf $(OBJ_DIR)
 
 upload:
 	$(FLASHER) -f --config=$(CONFIG_FILE) -u $(OBJ_DIR)/$(PROGRAM).hex
+
+upload_test:
+	$(FLASHER) -f --config=$(CONFIG_FILE) -u $(OBJ_DIR)/Test.hex
