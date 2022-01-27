@@ -6,6 +6,8 @@
 #include "semphr.h"
 #include <stdint.h>
 
+#include "i2c.h"
+
 extern QueueHandle_t pressure_queue;
 extern QueueHandle_t temperature_queue;
 extern QueueHandle_t humidity_queue;

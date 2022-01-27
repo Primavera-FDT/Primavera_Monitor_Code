@@ -5,6 +5,7 @@
 #include "task.h"
 
 #include "uart.h"
+#include "i2c.h"
 #include "streamer.h"
 #include "rtc.h"
 #include "rot_speed.h"

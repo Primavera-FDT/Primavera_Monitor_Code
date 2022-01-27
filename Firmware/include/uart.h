@@ -5,6 +5,9 @@
 #include "task.h"
 #include "semphr.h"
 
+#include "mpu6050.h"
+#include "rtc.h"
+
 extern QueueHandle_t user_commands;
 extern QueueHandle_t uart_queue;
 extern SemaphoreHandle_t uart_peripheral;
@@ -24,6 +27,21 @@ enum User_Command {
 
 struct User_Command_Message {
     enum User_Command Command;
+};
+
+struct Uart_Data {
+    char data[10];
+    uint8_t len;
+};
+
+struct Sensor_Data {
+    uint16_t pressure;
+    uint16_t temperature;
+    uint8_t humidity;
+    uint16_t rotational_speed;
+    struct MPU6050_Data shock_1;
+    struct MPU6050_Data shock_2;
+    struct Date date;
 };
 
 char Read_Char();

@@ -73,8 +73,8 @@ void vController(void *pvParameters) {
 
     while(1) {
 
-        user_commands = xQueueCreate( 5, sizeof(struct User_Command_Message));
-        uart_queue = xQueueCreate( 4, sizeof(char *));
+        user_commands = xQueueCreate( 2, sizeof(struct User_Command_Message));
+        uart_queue = xQueueCreate( 4, sizeof(struct Uart_Data));
         pressure_queue = xQueueCreate( 1, sizeof(uint16_t));
         temperature_queue = xQueueCreate( 1, sizeof(uint16_t));
         humidity_queue = xQueueCreate( 1, sizeof(uint16_t));
@@ -82,6 +82,10 @@ void vController(void *pvParameters) {
         shock_2_queue = xQueueCreate( 1, sizeof(struct MPU6050_Data));
         rotational_speed_queue = xQueueCreate( 1, sizeof(uint16_t));
         date_queue = xQueueCreate( 1, sizeof(struct Date));
+        I2C_Bus_1_Write_Queue = xQueueCreate( 5, sizeof(struct I2C_Message));
+        I2C_Bus_1_Read_Queue = xQueueCreate( 5, sizeof(struct I2C_Payload));
+        I2C_Bus_2_Write_Queue = xQueueCreate( 5, sizeof(struct I2C_Message));
+        I2C_Bus_2_Read_Queue = xQueueCreate( 5, sizeof(struct I2C_Payload));
 
         uart_peripheral = xSemaphoreCreateMutex();
         uart_receive = xSemaphoreCreateBinary();
@@ -98,6 +102,8 @@ void vController(void *pvParameters) {
 
         rot_speed_sema = xSemaphoreCreateBinary();
 
+        I2C_Atomic_Bus_1 = xSemaphoreCreateMutex();
+        I2C_Atomic_Bus_2 = xSemaphoreCreateMutex();
 
         // Start functions
         xTaskCreate( vUARTReceive,
@@ -150,16 +156,30 @@ void vController(void *pvParameters) {
                      4,
                      NULL );
 
+        xTaskCreate( vI2C_Bus_1,
+                     "vI2C_Bus_1",
+                     configMINIMAL_STACK_SIZE,
+                     NULL,
+                     4,
+                     NULL );
+
+        xTaskCreate( vI2C_Bus_2,
+                     "vI2C_Bus_2",
+                     configMINIMAL_STACK_SIZE,
+                     NULL,
+                     4,
+                     NULL );
+
         Timers_init();
 
-        xQueueSend( uart_queue, &send, portMAX_DELAY );
+        while(1);
 
+        struct User_Command_Message msg;
         while(1) {
-            struct User_Command_Message msg;
-            xQueueReceive( user_commands, (void *) &msg, portMAX_DELAY );
+            P1->OUT ^= 1;
+            xQueueReceive( user_commands, &msg, portMAX_DELAY );
             switch(msg.Command) {
                 case SEND:
-                    xQueueSend( uart_queue, &send, portMAX_DELAY );
                     break;
                 case STREAM_START:
                     break;
@@ -174,6 +194,8 @@ void vController(void *pvParameters) {
                 case EJECT_SD:
                     break;
                 case TIME_SET:
+                    break;
+                case ERROR:
                     break;
             }
         }

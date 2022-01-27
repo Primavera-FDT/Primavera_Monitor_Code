@@ -5,31 +5,22 @@ char *stream = "ok\n";
 SemaphoreHandle_t streamer_sema;
 
 void vStreamer(void *pvParameters) {
+
+    struct Sensor_Data data;
+
     while(1) {
-
-        uint16_t pressure;
-        uint16_t temperature;
-        uint16_t humidity;
-        uint16_t rotational_speed;
-
-        struct MPU6050_Data shock_1;
-        struct MPU6050_Data shock_2;
-
-        struct Date date;
 
         xSemaphoreTake( streamer_sema, portMAX_DELAY );
 
-        xQueueReceive( pressure_queue, &pressure, portMAX_DELAY );
-        xQueueReceive( temperature_queue, &temperature, portMAX_DELAY );
-        xQueueReceive( humidity_queue, &humidity, portMAX_DELAY );
-        xQueueReceive( shock_1_queue, &shock_1, portMAX_DELAY );
-        xQueueReceive( shock_2_queue, &shock_2, portMAX_DELAY );
-        xQueueReceive( date_queue, &date, portMAX_DELAY );
-        xQueueReceive( rotational_speed_queue, &rotational_speed, portMAX_DELAY );
+        xQueueReceive( pressure_queue, &data.pressure, portMAX_DELAY );
+        xQueueReceive( temperature_queue, &data.temperature, portMAX_DELAY );
+        xQueueReceive( humidity_queue, &data.humidity, portMAX_DELAY );
+        xQueueReceive( shock_1_queue, &data.shock_1, portMAX_DELAY );
+        xQueueReceive( shock_2_queue, &data.shock_2, portMAX_DELAY );
+        xQueueReceive( date_queue, &data.date, portMAX_DELAY );
+        xQueueReceive( rotational_speed_queue, &data.rotational_speed, portMAX_DELAY );
 
-        P1->OUT |= 1;
-
-        xQueueSend( uart_queue, &stream, portMAX_DELAY );
+        //xQueueSend( uart_queue, &data, portMAX_DELAY );
 
     }
 

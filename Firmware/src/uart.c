@@ -116,6 +116,133 @@ void vUARTReceive(void *pvParameters) {
 
 }
 
+void Write_Unsigned_Int( unsigned int data ) {
+    char buffer[10] = {0};
+    uint8_t length = 0;
+
+    while( data != 0 ) {
+        buffer[length] = (char)((data % 10)) + '0';
+        length++;
+        data /= 10;
+    }
+
+    for(int i=(length-1); i>=0; i--) {
+        Write_Char(buffer[i]);
+    }
+}
+
+void Write_Date_Uint( uint16_t data ) {
+    char buffer[4] = {0};
+    uint8_t length = 0;
+
+    while(data != 0) {
+        buffer[length] = (char)((data % 10)) + '0';
+        length++;
+        data /= 10;
+    }
+
+    if(length == 1) {
+        Write_Char('0');
+        Write_Char(buffer[0]);
+    } else {
+        for(int i=(length-1); i>=0; i--) {
+            Write_Char(buffer[i]);
+        }
+    }
+
+}
+
+void Write_Uint_As_Float( unsigned int data, uint8_t decimal_places ) {
+    char buffer[10] = {0};
+    uint8_t length = 0;
+
+    while( data != 0 ) {
+        buffer[length] = (char)((data % 10)) + '0';
+        length++;
+        data /= 10;
+    }
+
+    for(int i=(length-1); i>=decimal_places; i--) {
+        Write_Char(buffer[i]);
+    }
+
+    if( decimal_places > 0 ) {
+        Write_Char('.');
+
+        for(int i=(decimal_places-1); i>=0; i--) {
+            Write_Char(buffer[i]);
+        }
+    }
+}
+
+void Write_Float( float data, uint8_t decimal_places ) {
+    for(int i=0; i<decimal_places; i++ ) {
+        data *= 10;
+    }
+
+    unsigned int int_data = (unsigned int) data;
+
+    Write_Uint_As_Float( int_data, 2 );
+}
+
+void Write_Date( struct Date date ) {
+    Write_Char('S');
+    Write_Char(':');
+    Write_Date_Uint( date.Year );
+    Write_Char('-');
+    Write_Date_Uint( date.Month );
+    Write_Char('-');
+    Write_Date_Uint( date.Day );
+    Write_Char('T');
+    Write_Date_Uint( date.Hour );
+    Write_Char(':');
+    Write_Date_Uint( date.Min );
+    Write_Char(':');
+    Write_Date_Uint( date.Sec );
+}
+
+void Write_Pressure( uint16_t pressure ) {
+    Write_Char('F');
+    Write_Char(':');
+    Write_Uint_As_Float(pressure, 2);
+}
+
+void Write_Temperature( uint16_t temperature ) {
+    Write_Char('F');
+    Write_Char(':');
+    Write_Uint_As_Float(temperature, 2);
+}
+
+void Write_Humidity( uint8_t humidity ) {
+    Write_Char('I');
+    Write_Char(':');
+    Write_Unsigned_Int( humidity );
+}
+
+void Write_Rotational_Speed( uint16_t rotational_speed ) {
+    Write_Char('F');
+    Write_Char(':');
+    Write_Uint_As_Float( rotational_speed, 1 );
+}
+
+void Write_Shock_Data( struct MPU6050_Data data ) {
+    Write_Char('F');
+    Write_Char(':');
+    Write_Float( data.Minimum, 2 );
+    Write_Char(',');
+    Write_Char('F');
+    Write_Char(':');
+    Write_Float( data.Maximum, 2 );
+    Write_Char(',');
+    Write_Char('F');
+    Write_Char(':');
+    Write_Float( data.Average, 2 );
+    Write_Char(',');
+    Write_Char('F');
+    Write_Char(':');
+    Write_Float( data.Stddev, 2 );
+}
+
 void vUARTSend(void *pvParameters) {
 
     if( !uart_initialized ) {
@@ -123,17 +250,19 @@ void vUARTSend(void *pvParameters) {
         uart_initialized = 1;
     }
 
-    char *msg;
+    struct Uart_Data data;
 
     while(1) {
 
-        xQueueReceive( uart_queue, &msg, portMAX_DELAY );
+        xQueueReceive( uart_queue, &data, portMAX_DELAY );
 
-        int counter = 0;
-        while(msg[counter] != '\0') {
-            Write_Char(msg[counter]);
-            counter++;
+        xSemaphoreTake( uart_peripheral, portMAX_DELAY );
+
+        for(int i=0; i<data.len; i++) {
+            Write_Char(data.data[i]);
         }
+
+        xSemaphoreGive( uart_peripheral );
 
     }
 
