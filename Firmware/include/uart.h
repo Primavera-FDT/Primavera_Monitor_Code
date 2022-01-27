@@ -16,6 +16,7 @@ extern SemaphoreHandle_t uart_send_atomic;
 
 enum User_Command {
     ERROR,
+    INVALID_COMMAND,
     SEND,
     STREAM_START,
     STREAM_STOP,
@@ -27,7 +28,7 @@ enum User_Command {
 };
 
 struct User_Command_Message {
-    enum User_Command Command;
+    enum User_Command command;
 };
 
 struct Uart_Data {
@@ -43,6 +44,13 @@ struct Sensor_Data {
     struct MPU6050_Data shock_1;
     struct MPU6050_Data shock_2;
     struct Date date;
+};
+
+enum Uart_Receive_State {
+    UART_START,
+    UART_START_COMMAND,
+    UART_SIMPLE_COMMAND_NL,
+    UART_SIMPLE_COMMAND_CR,
 };
 
 void Uart_Claim_Atomic();

@@ -2,6 +2,10 @@
 
 static int uart_initialized = 0;
 
+char circle_buffer[20] = {0};
+uint8_t last = 0;
+uint8_t first = 0;
+
 QueueHandle_t user_commands;
 QueueHandle_t uart_queue;
 SemaphoreHandle_t uart_peripheral;
@@ -12,6 +16,12 @@ void EUSCIA0_IRQHandler(void) {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
     xSemaphoreGiveFromISR( uart_receive, &xHigherPriorityTaskWoken );
+
+    circle_buffer[last] = EUSCI_A0->RXBUF;
+    last++;
+    if( last == 20 ) {
+        last = 0;
+    }
 
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
@@ -54,24 +64,12 @@ void Uart_Send( char * data, uint8_t len ) {
 void Uart_Send_Atomic( char * data, uint8_t len ) {
     struct Uart_Data uart_data;
 
-    uint8_t count = 0;
-    uint8_t current_len = len;
-    while(current_len > 0) {
-        if (count == 10) {
-            uart_data.len = count;
-            xQueueSend( uart_queue, &uart_data, portMAX_DELAY );
-            count = 0;
-        } else {
-            uart_data.data[count] = data[len - current_len];
-            count++;
-            current_len--;
-        }
+    uart_data.len = len;
+    for(int i=0; i<len; i++) {
+        uart_data.data[i] = data[i];
     }
 
-    if( count > 0 ) {
-        uart_data.len = count;
-        xQueueSend( uart_queue, &uart_data, portMAX_DELAY );
-    }
+    xQueueSend( uart_queue, &uart_data, portMAX_DELAY );
 }
 
 char Read_Char(void) {
@@ -108,12 +106,13 @@ void UART_Init(void) {
     EUSCI_A0->MCTLW |= (0x49 << 8) | ( 1 << 0 );
 
     EUSCI_A0->BRW = 13;
-    EUSCI_A0->IE |= ( 1 << 2 );
 
     EUSCI_A0->CTLW0 &= ~( 1 << 0 );
+    EUSCI_A0->IE |= 1;
 
-    //NVIC_EnableIRQ(EUSCIA0_IRQn);
-    //NVIC_SetPriority(EUSCIA0_IRQn ,6);
+
+    NVIC_EnableIRQ(EUSCIA0_IRQn);
+    NVIC_SetPriority(EUSCIA0_IRQn ,6);
 }
 
 void vUARTReceive(void *pvParameters) {
@@ -123,183 +122,95 @@ void vUARTReceive(void *pvParameters) {
         uart_initialized = 1;
     }
 
+    struct User_Command_Message msg;
+    enum Uart_Receive_State state = UART_START;
+
     xSemaphoreTake( uart_receive, 0 );
 
     while(1) {
 
-        xSemaphoreTake( uart_peripheral, portMAX_DELAY );
-
-        struct User_Command_Message msg;
-        char curr = Read_Char();
-        if(curr == '$') {
-            curr = Read_Char();
-            switch(curr) {
-                case 'S':
-                    msg.Command = SEND;
-                    break;
-                case 'I':
-                    msg.Command = STREAM_START;
-                    break;
-                case 'O':
-                    msg.Command = STREAM_STOP;
-                    break;
-                case 'U':
-                    msg.Command = STATUS;
-                    break;
-                case 'L':
-                    msg.Command = LOG;
-                    break;
-                case 'P':
-                    msg.Command = EJECT_SD;
-                    break;
-                case 'M':
-                    msg.Command = MOUNT_SD;
-                    break;
-                case 'T':
-                    msg.Command = TIME_SET;
-                    break;
-                default:
-                    msg.Command = ERROR;
-                    break;
-            }
+        if( last == first ) {
+            xSemaphoreTake( uart_receive, portMAX_DELAY );
         } else {
-            msg.Command = ERROR;
+            xSemaphoreTake( uart_receive, 0 );
         }
 
-        xSemaphoreGive( uart_peripheral );
+        char curr_char = circle_buffer[first];
+        first++;
+        if( first == 20 ) {
+            first = 0;
+        }
 
-        xQueueSend( user_commands, (void *) &msg, portMAX_DELAY );
+        switch(state) {
+            case UART_START:
+                if(curr_char == '$') {
+                    state = UART_START_COMMAND;
+                } else {
+                    msg.command = ERROR;
+                    xQueueSend( user_commands, &msg, portMAX_DELAY );
+                }
+                break;
+            case UART_START_COMMAND:
+                switch(curr_char) {
+                    case 'S':
+                        msg.command = SEND;
+                        state = UART_SIMPLE_COMMAND_NL;
+                        break;
+                    case 'I':
+                        msg.command = STREAM_START;
+                        state = UART_SIMPLE_COMMAND_NL;
+                        break;
+                    case 'O':
+                        msg.command = STREAM_STOP;
+                        state = UART_SIMPLE_COMMAND_NL;
+                        break;
+                    case 'U':
+                        msg.command = STATUS;
+                        state = UART_SIMPLE_COMMAND_NL;
+                        break;
+                    case 'L':
+                        msg.command = LOG;
+                        state = UART_SIMPLE_COMMAND_NL;
+                        break;
+                    case 'P':
+                        msg.command = EJECT_SD;
+                        state = UART_SIMPLE_COMMAND_NL;
+                        break;
+                    case 'M':
+                        msg.command = MOUNT_SD;
+                        state = UART_SIMPLE_COMMAND_NL;
+                        break;
+                    // Time_Set : T
+                    default:
+                        msg.command = INVALID_COMMAND;
+                        state = UART_SIMPLE_COMMAND_NL;
+                        break;
+                }
+                break;
+            case UART_SIMPLE_COMMAND_NL:
+                if( curr_char == '\n') {
+                    state = UART_SIMPLE_COMMAND_CR;
+                } else {
+                    msg.command = ERROR;
+                    xQueueSend( user_commands, &msg, portMAX_DELAY );
+                    state = UART_START;
+                }
+                break;
+            case UART_SIMPLE_COMMAND_CR:
+                if( curr_char == '\r') {
+                    state = UART_START;
+                    xQueueSend( user_commands, &msg, portMAX_DELAY );
+                } else {
+                    msg.command = ERROR;
+                    xQueueSend( user_commands, &msg, portMAX_DELAY );
+                    state = UART_START;
+                }
+                break;
+        };
     }
 
     vTaskDelete( NULL );
 
-}
-
-void Write_Unsigned_Int( unsigned int data ) {
-    char buffer[10] = {0};
-    uint8_t length = 0;
-
-    while( data != 0 ) {
-        buffer[length] = (char)((data % 10)) + '0';
-        length++;
-        data /= 10;
-    }
-
-    for(int i=(length-1); i>=0; i--) {
-        Write_Char(buffer[i]);
-    }
-}
-
-void Write_Date_Uint( uint16_t data ) {
-    char buffer[4] = {0};
-    uint8_t length = 0;
-
-    while(data != 0) {
-        buffer[length] = (char)((data % 10)) + '0';
-        length++;
-        data /= 10;
-    }
-
-    if(length == 1) {
-        Write_Char('0');
-        Write_Char(buffer[0]);
-    } else {
-        for(int i=(length-1); i>=0; i--) {
-            Write_Char(buffer[i]);
-        }
-    }
-
-}
-
-void Write_Uint_As_Float( unsigned int data, uint8_t decimal_places ) {
-    char buffer[10] = {0};
-    uint8_t length = 0;
-
-    while( data != 0 ) {
-        buffer[length] = (char)((data % 10)) + '0';
-        length++;
-        data /= 10;
-    }
-
-    for(int i=(length-1); i>=decimal_places; i--) {
-        Write_Char(buffer[i]);
-    }
-
-    if( decimal_places > 0 ) {
-        Write_Char('.');
-
-        for(int i=(decimal_places-1); i>=0; i--) {
-            Write_Char(buffer[i]);
-        }
-    }
-}
-
-void Write_Float( float data, uint8_t decimal_places ) {
-    for(int i=0; i<decimal_places; i++ ) {
-        data *= 10;
-    }
-
-    unsigned int int_data = (unsigned int) data;
-
-    Write_Uint_As_Float( int_data, 2 );
-}
-
-void Write_Date( struct Date date ) {
-    Write_Char('S');
-    Write_Char(':');
-    Write_Date_Uint( date.Year );
-    Write_Char('-');
-    Write_Date_Uint( date.Month );
-    Write_Char('-');
-    Write_Date_Uint( date.Day );
-    Write_Char('T');
-    Write_Date_Uint( date.Hour );
-    Write_Char(':');
-    Write_Date_Uint( date.Min );
-    Write_Char(':');
-    Write_Date_Uint( date.Sec );
-}
-
-void Write_Pressure( uint16_t pressure ) {
-    Write_Char('F');
-    Write_Char(':');
-    Write_Uint_As_Float(pressure, 2);
-}
-
-void Write_Temperature( uint16_t temperature ) {
-    Write_Char('F');
-    Write_Char(':');
-    Write_Uint_As_Float(temperature, 2);
-}
-
-void Write_Humidity( uint8_t humidity ) {
-    Write_Char('I');
-    Write_Char(':');
-    Write_Unsigned_Int( humidity );
-}
-
-void Write_Rotational_Speed( uint16_t rotational_speed ) {
-    Write_Char('F');
-    Write_Char(':');
-    Write_Uint_As_Float( rotational_speed, 1 );
-}
-
-void Write_Shock_Data( struct MPU6050_Data data ) {
-    Write_Char('F');
-    Write_Char(':');
-    Write_Float( data.Minimum, 2 );
-    Write_Char(',');
-    Write_Char('F');
-    Write_Char(':');
-    Write_Float( data.Maximum, 2 );
-    Write_Char(',');
-    Write_Char('F');
-    Write_Char(':');
-    Write_Float( data.Average, 2 );
-    Write_Char(',');
-    Write_Char('F');
-    Write_Char(':');
-    Write_Float( data.Stddev, 2 );
 }
 
 void vUARTSend(void *pvParameters) {

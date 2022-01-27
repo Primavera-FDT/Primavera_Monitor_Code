@@ -111,28 +111,28 @@ void vController(void *pvParameters) {
                      "vUARTReceive",
                      configMINIMAL_STACK_SIZE,
                      NULL,
-                     2,
+                     4,
                      NULL);
 
         xTaskCreate( vUARTSend,
                      "vUARTSend",
                      configMINIMAL_STACK_SIZE,
                      NULL,
-                     4,
+                     3,
                      NULL);
 
         xTaskCreate( vStreamer,
                      "vStreamer",
-                     configMINIMAL_STACK_SIZE,
+                     configMINIMAL_STACK_SIZE + 50,
                      NULL,
-                     4,
+                     3,
                      NULL );
 
         xTaskCreate( vBME280,
                      "vBME280",
                      configMINIMAL_STACK_SIZE,
                      NULL,
-                     4,
+                     3,
                      NULL );
 
 
@@ -140,51 +140,51 @@ void vController(void *pvParameters) {
                      "vMPU6050",
                      configMINIMAL_STACK_SIZE,
                      NULL,
-                     4,
+                     3,
                      NULL );
 
         xTaskCreate( vRotSpeed,
                      "vRotSpeed",
                      configMINIMAL_STACK_SIZE,
                      NULL,
-                     4,
+                     3,
                      NULL );
 
         xTaskCreate( vRTC,
                      "vRTC",
                      configMINIMAL_STACK_SIZE,
                      NULL,
-                     4,
+                     3,
                      NULL );
 
         xTaskCreate( vI2C_Bus_1,
                      "vI2C_Bus_1",
                      configMINIMAL_STACK_SIZE,
                      NULL,
-                     4,
+                     3,
                      NULL );
 
         xTaskCreate( vI2C_Bus_2,
                      "vI2C_Bus_2",
                      configMINIMAL_STACK_SIZE,
                      NULL,
-                     4,
+                     3,
                      NULL );
 
         Timers_init();
 
-        while(1);
-
         struct User_Command_Message msg;
         while(1) {
-            P1->OUT ^= 1;
             xQueueReceive( user_commands, &msg, portMAX_DELAY );
-            switch(msg.Command) {
+            switch(msg.command) {
                 case SEND:
+                    Uart_Send("Send\n\r", 6);
                     break;
                 case STREAM_START:
+                    Uart_Send("S Start\n\r", 9);
                     break;
                 case STREAM_STOP:
+                    Uart_Send("S Stop\n\r", 8 );
                     break;
                 case LOG:
                     break;
@@ -197,6 +197,10 @@ void vController(void *pvParameters) {
                 case TIME_SET:
                     break;
                 case ERROR:
+                    Uart_Send("Err\n\r", 5 );
+                    break;
+                case INVALID_COMMAND:
+                    Uart_Send("Invd\n\r", 6 );
                     break;
             }
         }
@@ -218,7 +222,7 @@ int main(void) {
             "Controller",
             configMINIMAL_STACK_SIZE,
             NULL,
-            3,
+            2,
             NULL);
 
     __enable_interrupt();
