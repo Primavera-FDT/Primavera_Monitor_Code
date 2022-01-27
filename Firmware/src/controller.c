@@ -89,6 +89,7 @@ void vController(void *pvParameters) {
 
         uart_peripheral = xSemaphoreCreateMutex();
         uart_receive = xSemaphoreCreateBinary();
+        uart_send_atomic = xSemaphoreCreateMutex();
 
         bme280_sema = xSemaphoreCreateBinary();
         mpu_sema = xSemaphoreCreateBinary();

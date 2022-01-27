@@ -6,6 +6,7 @@ QueueHandle_t user_commands;
 QueueHandle_t uart_queue;
 SemaphoreHandle_t uart_peripheral;
 SemaphoreHandle_t uart_receive;
+SemaphoreHandle_t uart_send_atomic;
 
 void EUSCIA0_IRQHandler(void) {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -13,6 +14,64 @@ void EUSCIA0_IRQHandler(void) {
     xSemaphoreGiveFromISR( uart_receive, &xHigherPriorityTaskWoken );
 
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+}
+
+void Uart_Claim_Atomic() {
+    xSemaphoreTake( uart_send_atomic, portMAX_DELAY );
+}
+
+void Uart_Claim_Release() {
+    xSemaphoreGive( uart_send_atomic );
+}
+
+void Uart_Send( char * data, uint8_t len ) {
+    xSemaphoreTake( uart_send_atomic, portMAX_DELAY );
+
+    struct Uart_Data uart_data;
+
+    uint8_t count = 0;
+    uint8_t current_len = len;
+    while(current_len > 0) {
+        if (count == 10) {
+            uart_data.len = count;
+            xQueueSend( uart_queue, &uart_data, portMAX_DELAY );
+            count = 0;
+        } else {
+            uart_data.data[count] = data[len - current_len];
+            count++;
+            current_len--;
+        }
+    }
+
+    if( count > 0 ) {
+        uart_data.len = count;
+        xQueueSend( uart_queue, &uart_data, portMAX_DELAY );
+    }
+
+    xSemaphoreGive( uart_send_atomic );
+}
+
+void Uart_Send_Atomic( char * data, uint8_t len ) {
+    struct Uart_Data uart_data;
+
+    uint8_t count = 0;
+    uint8_t current_len = len;
+    while(current_len > 0) {
+        if (count == 10) {
+            uart_data.len = count;
+            xQueueSend( uart_queue, &uart_data, portMAX_DELAY );
+            count = 0;
+        } else {
+            uart_data.data[count] = data[len - current_len];
+            count++;
+            current_len--;
+        }
+    }
+
+    if( count > 0 ) {
+        uart_data.len = count;
+        xQueueSend( uart_queue, &uart_data, portMAX_DELAY );
+    }
 }
 
 char Read_Char(void) {

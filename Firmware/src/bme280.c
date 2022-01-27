@@ -16,12 +16,6 @@ void vBME280(void *pvParameters) {
 
         xSemaphoreTake( bme280_sema, portMAX_DELAY );
 
-        struct I2C_Address addr = { .write_address = 0x80, .read_address = 0x81, .width = 8};
-
-        I2C_Write(0, addr, I2C_WRITE, 0x50 );
-        I2C_Write(0, addr, I2C_WRITE_COND, 0x50 );
-        I2C_Write(0, addr, I2C_READ, 0x20 );
-
         xQueueSend( pressure_queue, &pressure, portMAX_DELAY );
         xQueueSend( temperature_queue, &temperature, portMAX_DELAY );
         xQueueSend( humidity_queue, &humidity, portMAX_DELAY );

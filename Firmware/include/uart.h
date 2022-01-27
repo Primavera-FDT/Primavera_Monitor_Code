@@ -12,6 +12,7 @@ extern QueueHandle_t user_commands;
 extern QueueHandle_t uart_queue;
 extern SemaphoreHandle_t uart_peripheral;
 extern SemaphoreHandle_t uart_receive;
+extern SemaphoreHandle_t uart_send_atomic;
 
 enum User_Command {
     ERROR,
@@ -43,6 +44,12 @@ struct Sensor_Data {
     struct MPU6050_Data shock_2;
     struct Date date;
 };
+
+void Uart_Claim_Atomic();
+void Uart_Claim_Release();
+
+void Uart_Send(char *data, uint8_t len);
+void Uart_Send_Atomic(char *data, uint8_t len);
 
 char Read_Char();
 int Write_Char(char c);
