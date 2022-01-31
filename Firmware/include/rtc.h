@@ -5,6 +5,8 @@
 #include "task.h"
 #include "semphr.h"
 
+#include "i2c.h"
+
 #include <stdint.h>
 
 extern QueueHandle_t date_queue;

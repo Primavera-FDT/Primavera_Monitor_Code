@@ -8,8 +8,8 @@ void T32_INT1_IRQHandler(void) {
     BaseType_t xHigherPriorityTaskWoken_1 = pdFALSE;
     BaseType_t xHigherPriorityTaskWoken_2 = pdFALSE;
 
-    xSemaphoreGiveFromISR( shock_1_mutex, &xHigherPriorityTaskWoken_1 );
-    xSemaphoreGiveFromISR( shock_2_mutex, &xHigherPriorityTaskWoken_2 );
+    xSemaphoreGiveFromISR( mpu_sema_sample_1, &xHigherPriorityTaskWoken_1 );
+    xSemaphoreGiveFromISR( mpu_sema_sample_2, &xHigherPriorityTaskWoken_2 );
 
     TIMER32_1->INTCLR = 1;
 
@@ -28,7 +28,8 @@ void T32_INT2_IRQHandler(void) {
     xSemaphoreGiveFromISR( bme280_sema, &bme280_woken );
     xSemaphoreGiveFromISR( streamer_sema, &streamer_woken );
     xSemaphoreGiveFromISR( rtc_sema, &rtc_woken );
-    xSemaphoreGiveFromISR( mpu_sema, &mpu_woken );
+    xSemaphoreGiveFromISR( mpu_sema_1, &mpu_woken );
+    xSemaphoreGiveFromISR( mpu_sema_2, &mpu_woken );
     xSemaphoreGiveFromISR( rot_speed_sema, &rot_speed_woken );
 
     TIMER32_2->INTCLR = 1;
@@ -48,23 +49,22 @@ void Timers_init(void) {
 
     TIMER32_2->LOAD = SECOND_1_DELAY;
 
-    //TIMER32_1->CONTROL |= ( 1 << 6 );
-    //TIMER32_1->CONTROL |= ( 1 << 1 );
-    //TIMER32_1->CONTROL |= ( 1 << 7 );
+    TIMER32_1->CONTROL |= ( 1 << 6 );
+    TIMER32_1->CONTROL |= ( 1 << 1 );
+    TIMER32_1->CONTROL |= ( 1 << 7 );
+    TIMER32_1->CONTROL &= ~1;
+    TIMER32_1->CONTROL &= ~( 3 << 2 );
 
-    //TIMER32_1->LOAD = MILISECOND_20_DELAY;
+    TIMER32_1->LOAD = MILISECOND_20_DELAY;
 
-    //NVIC_EnableIRQ(T32_INT1_IRQn);
-    //NVIC_SetPriority(T32_INT1_IRQn, 6);
+    NVIC_EnableIRQ(T32_INT1_IRQn);
+    NVIC_SetPriority(T32_INT1_IRQn, 6);
     NVIC_EnableIRQ(T32_INT2_IRQn);
     NVIC_SetPriority(T32_INT2_IRQn, 6);
 
-    //TIMER32_1->CONTROL |= ( 1 << 5);
+    TIMER32_1->CONTROL |= ( 1 << 5);
     TIMER32_2->CONTROL |= ( 1 << 5);
 }
-
-char *send = "send\n";
-char *error = "error\n";
 
 void vController(void *pvParameters) {
 
@@ -82,20 +82,20 @@ void vController(void *pvParameters) {
         shock_2_queue = xQueueCreate( 1, sizeof(struct MPU6050_Data));
         rotational_speed_queue = xQueueCreate( 1, sizeof(uint16_t));
         date_queue = xQueueCreate( 1, sizeof(struct Date));
-        I2C_Bus_1_Write_Queue = xQueueCreate( 5, sizeof(struct I2C_Message));
-        I2C_Bus_1_Read_Queue = xQueueCreate( 5, sizeof(struct I2C_Payload));
-        I2C_Bus_2_Write_Queue = xQueueCreate( 5, sizeof(struct I2C_Message));
-        I2C_Bus_2_Read_Queue = xQueueCreate( 5, sizeof(struct I2C_Payload));
+        I2C_Bus_1_Write_Queue = xQueueCreate( 5, sizeof(struct I2C_To_Task_Msg));
+        I2C_Bus_1_Read_Queue = xQueueCreate( 5, sizeof(struct I2C_From_Task_Msg));
+        I2C_Bus_2_Write_Queue = xQueueCreate( 5, sizeof(struct I2C_To_Task_Msg));
+        I2C_Bus_2_Read_Queue = xQueueCreate( 5, sizeof(struct I2C_From_Task_Msg));
 
         uart_peripheral = xSemaphoreCreateMutex();
         uart_receive = xSemaphoreCreateBinary();
         uart_send_atomic = xSemaphoreCreateMutex();
 
         bme280_sema = xSemaphoreCreateBinary();
-        mpu_sema = xSemaphoreCreateBinary();
-
-        shock_1_mutex = xSemaphoreCreateBinary();
-        shock_2_mutex = xSemaphoreCreateBinary();
+        mpu_sema_1 = xSemaphoreCreateBinary();
+        mpu_sema_2 = xSemaphoreCreateBinary();
+        mpu_sema_sample_1 = xSemaphoreCreateBinary();
+        mpu_sema_sample_2 = xSemaphoreCreateBinary();
 
         rtc_sema = xSemaphoreCreateBinary();
 
@@ -136,8 +136,15 @@ void vController(void *pvParameters) {
                      NULL );
 
 
-        xTaskCreate( vMPU6050,
-                     "vMPU6050",
+        xTaskCreate( vMPU6050_1,
+                     "vMPU6050 1",
+                     configMINIMAL_STACK_SIZE,
+                     NULL,
+                     3,
+                     NULL );
+
+        xTaskCreate( vMPU6050_2,
+                     "vMPU6050 2",
                      configMINIMAL_STACK_SIZE,
                      NULL,
                      3,

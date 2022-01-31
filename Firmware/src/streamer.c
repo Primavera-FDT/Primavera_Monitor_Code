@@ -140,32 +140,32 @@ void vStreamer(void *pvParameters) {
 
         xSemaphoreTake( streamer_sema, portMAX_DELAY );
 
-        xQueueReceive( pressure_queue, &data.pressure, portMAX_DELAY );
-        xQueueReceive( temperature_queue, &data.temperature, portMAX_DELAY );
-        xQueueReceive( humidity_queue, &data.humidity, portMAX_DELAY );
-        xQueueReceive( shock_1_queue, &data.shock_1, portMAX_DELAY );
-        xQueueReceive( shock_2_queue, &data.shock_2, portMAX_DELAY );
+        //xQueueReceive( pressure_queue, &data.pressure, portMAX_DELAY );
+        //xQueueReceive( temperature_queue, &data.temperature, portMAX_DELAY );
+        //xQueueReceive( humidity_queue, &data.humidity, portMAX_DELAY );
+        //xQueueReceive( shock_1_queue, &data.shock_1, portMAX_DELAY );
+        //xQueueReceive( shock_2_queue, &data.shock_2, portMAX_DELAY );
         xQueueReceive( date_queue, &data.date, portMAX_DELAY );
-        xQueueReceive( rotational_speed_queue, &data.rotational_speed, portMAX_DELAY );
+        //xQueueReceive( rotational_speed_queue, &data.rotational_speed, portMAX_DELAY );
 
         Uart_Claim_Atomic();
 
         Write_To_Char_Buffer('D');
         Write_To_Char_Buffer(' ');
 
-        Write_Pressure_To_Buffer( data.pressure );
-        Write_To_Char_Buffer(',');
-        Write_Temperature_To_Buffer( data.temperature );
-        Write_To_Char_Buffer(',');
-        Write_Humidity_To_Buffer( data.humidity );
-        Write_To_Char_Buffer(',');
-        Write_Shock_To_Buffer( &(data.shock_1) );
-        Write_To_Char_Buffer(',');
-        Write_Shock_To_Buffer( &(data.shock_2) );
-        Write_To_Char_Buffer(',');
-        //Write_Date_To_Buffer( &(data.date) );
+        //Write_Pressure_To_Buffer( data.pressure );
         //Write_To_Char_Buffer(',');
-        Write_Rotational_Speed_To_Buffer( data.rotational_speed );
+        //Write_Temperature_To_Buffer( data.temperature );
+        //Write_To_Char_Buffer(',');
+        //Write_Humidity_To_Buffer( data.humidity );
+        //Write_To_Char_Buffer(',');
+        //Write_Shock_To_Buffer( &(data.shock_1) );
+        //Write_To_Char_Buffer(',');
+        //Write_Shock_To_Buffer( &(data.shock_2) );
+        //Write_To_Char_Buffer(',');
+        Write_Date_To_Buffer( &(data.date) );
+        Write_To_Char_Buffer(',');
+        //Write_Rotational_Speed_To_Buffer( data.rotational_speed );
         Write_To_Char_Buffer('\n');
         Write_To_Char_Buffer('\r');
 
